@@ -56,7 +56,7 @@ from lms.djangoapps.learner_home.utils import (
     get_masquerade_user,
 )
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from user_extension.organization_display import (
+from course_partnerships.organization_display import (
     get_organization_display_name,
     get_organization_names,
 )

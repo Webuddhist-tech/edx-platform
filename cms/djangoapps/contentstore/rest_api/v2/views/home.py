@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 
 from openedx.core.lib.api.view_utils import view_auth_classes
-from user_extension.organization_display import (
+from course_partnerships.organization_display import (
     get_organization_display_name,
     get_organization_names,
 )
