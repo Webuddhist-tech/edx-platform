@@ -8,6 +8,10 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 
 from openedx.core.lib.api.view_utils import view_auth_classes
+from user_extension.organization_display import (
+    get_organization_display_name,
+    get_organization_names,
+)
 
 from cms.djangoapps.contentstore.utils import get_course_context_v2
 from cms.djangoapps.contentstore.rest_api.v2.serializers import CourseHomeTabSerializerV2
@@ -133,8 +137,24 @@ class HomePageCoursesViewV2(APIView):
             self.request,
             view=self
         )
-        serializer = CourseHomeTabSerializerV2({
-            'courses': courses_page,
-            'in_process_course_actions': in_process_course_actions,
-        })
+        organization_names = get_organization_names(course.org for course in courses_page)
+        organization_display_names = {}
+        for course in courses_page:
+            display_override = (
+                course.display_org_with_default
+                if course.display_org_with_default != course.org
+                else None
+            )
+            organization_display_names[str(course.id)] = get_organization_display_name(
+                org_slug=course.org,
+                display_organization=display_override,
+                organization_name=organization_names.get(course.org),
+            )
+        serializer = CourseHomeTabSerializerV2(
+            {
+                'courses': courses_page,
+                'in_process_course_actions': in_process_course_actions,
+            },
+            context={'organization_display_names': organization_display_names},
+        )
         return paginator.get_paginated_response(serializer.data)

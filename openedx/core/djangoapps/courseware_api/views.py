@@ -73,6 +73,7 @@ from openedx.core.lib.course_about import (
     get_course_requirement,
 )
 from openedx.core.lib.courses import get_course_by_id
+from user_extension.organization_display import get_course_organization_display_name
 from openedx.features.course_experience import ENABLE_COURSE_GOALS
 from openedx.features.course_experience.waffle import ENABLE_COURSE_ABOUT_SIDEBAR_HTML
 from openedx.features.content_type_gating.models import ContentTypeGatingConfig
@@ -121,6 +122,11 @@ class CoursewareMeta:
 
     def __getattr__(self, name):
         return getattr(self.course_overview, name)
+
+    @property
+    def organization_display_name(self):
+        """Return the organization label intended for learner-facing pages."""
+        return get_course_organization_display_name(self.course)
 
     @property
     def enrollment(self):
