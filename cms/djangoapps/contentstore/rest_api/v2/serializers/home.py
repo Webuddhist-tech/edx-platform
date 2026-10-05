@@ -31,6 +31,7 @@ class CourseCommonSerializerV2(serializers.Serializer):
     cms_link = serializers.SerializerMethodField()
     number = serializers.CharField()
     org = serializers.CharField()
+    organization_display_name = serializers.SerializerMethodField()
     rerun_link = serializers.SerializerMethodField()
     run = serializers.CharField(source='id.run')
     url = serializers.SerializerMethodField()
@@ -55,6 +56,13 @@ class CourseCommonSerializerV2(serializers.Serializer):
     def get_is_active(self, obj):
         """Get whether the course is active or not."""
         return not obj.has_ended()
+
+    def get_organization_display_name(self, obj):
+        """Get the presentation-only organization label for a course card."""
+        return self.context.get("organization_display_names", {}).get(
+            str(obj.id),
+            obj.display_org_with_default,
+        )
 
 
 class CourseHomeTabSerializerV2(serializers.Serializer):

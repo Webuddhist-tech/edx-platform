@@ -56,6 +56,10 @@ from lms.djangoapps.learner_home.utils import (
     get_masquerade_user,
 )
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from course_partnerships.organization_display import (
+    get_organization_display_name,
+    get_organization_names,
+)
 from openedx.core.djangoapps.programs.utils import ProgramProgressMeter
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.lib.api.authentication import BearerAuthenticationAllowInactiveUser
@@ -559,6 +563,27 @@ class InitializeView(APIView):  # pylint: disable=unused-argument
             "suggestedCourses": suggested_courses,
         }
 
+        course_overviews = [
+            enrollment.course_overview
+            for enrollment in course_enrollments
+            if enrollment.course_overview
+        ]
+        organization_names = get_organization_names(
+            overview.org for overview in course_overviews
+        )
+        organization_display_names = {}
+        for overview in course_overviews:
+            display_override = (
+                overview.display_org_with_default
+                if overview.display_org_with_default != overview.org
+                else None
+            )
+            organization_display_names[str(overview.id)] = get_organization_display_name(
+                org_slug=overview.org,
+                display_organization=display_override,
+                organization_name=organization_names.get(overview.org),
+            )
+
         context = {
             "audit_access_deadlines": audit_access_deadlines,
             "ecommerce_payment_page": ecommerce_payment_page,
@@ -576,6 +601,7 @@ class InitializeView(APIView):  # pylint: disable=unused-argument
             "unfulfilled_entitlement_pseudo_sessions": unfulfilled_entitlement_pseudo_sessions,
             "pseudo_session_course_overviews": pseudo_session_course_overviews,
             "programs": programs,
+            "organization_display_names": organization_display_names,
         }
 
         response_data = serialize_learner_home_data(learner_dash_data, context)
