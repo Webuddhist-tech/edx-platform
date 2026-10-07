@@ -165,6 +165,7 @@ class CourseInfoSerializer(serializers.Serializer):  # pylint: disable=abstract-
     )
     display_number_with_default = serializers.CharField()
     display_org_with_default = serializers.CharField()
+    organization_display_name = serializers.CharField()
     overview = serializers.CharField(
         allow_blank=True,
         allow_null=True,

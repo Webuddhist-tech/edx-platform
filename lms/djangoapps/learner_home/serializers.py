@@ -61,6 +61,14 @@ class CourseProviderSerializer(serializers.Serializer):
     """Info about a course provider (institution/business) from a CourseOverview"""
 
     name = serializers.CharField(source="display_org_with_default")
+    organizationDisplayName = serializers.SerializerMethodField()
+
+    def get_organizationDisplayName(self, overview):
+        """Return the backend-resolved learner-facing organization label."""
+        return self.context.get("organization_display_names", {}).get(
+            str(overview.id),
+            overview.display_org_with_default,
+        )
 
 
 class CourseSerializer(serializers.Serializer):
@@ -564,7 +572,11 @@ class UnfulfilledEntitlementSerializer(serializers.Serializer):
     def get_courseProvider(self, instance):
         """Serialize course provider info from a course overview"""
         course_overview = self._get_course_overview(instance)
-        return CourseProviderSerializer(course_overview, allow_null=True).data
+        return CourseProviderSerializer(
+            course_overview,
+            allow_null=True,
+            context=self.context,
+        ).data
 
     def get_programs(self, instance):
         """
