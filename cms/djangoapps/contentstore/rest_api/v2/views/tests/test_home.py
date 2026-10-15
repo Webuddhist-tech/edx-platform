@@ -10,6 +10,7 @@ import pytz
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
+from organizations.tests.factories import OrganizationFactory
 
 from cms.djangoapps.contentstore.tests.utils import CourseTestCase
 from cms.djangoapps.contentstore.utils import reverse_course_url
@@ -60,6 +61,7 @@ class HomePageCoursesViewV2Test(CourseTestCase):
                     ("cms_link", f'//{settings.CMS_BASE}{reverse_course_url("course_handler", self.course.id)}'),
                     ("number", self.course.number),
                     ("org", self.course.org),
+                    ("organization_display_name", self.course.org),
                     ("rerun_link", f'/course_rerun/{course_id}'),
                     ("run", self.course.id.run),
                     ("url", f'/course/{course_id}'),
@@ -78,6 +80,7 @@ class HomePageCoursesViewV2Test(CourseTestCase):
                     ),
                     ("number", self.archived_course.number),
                     ("org", self.archived_course.org),
+                    ("organization_display_name", self.archived_course.org),
                     ("rerun_link", f'/course_rerun/{str(self.archived_course.id)}'),
                     ("run", self.archived_course.id.run),
                     ("url", f'/course/{str(self.archived_course.id)}'),
@@ -113,6 +116,7 @@ class HomePageCoursesViewV2Test(CourseTestCase):
             ("cms_link", f'//{settings.CMS_BASE}{reverse_course_url("course_handler", self.course.id)}'),
             ("number", self.course.number),
             ("org", self.course.org),
+            ("organization_display_name", self.course.org),
             ("rerun_link", f'/course_rerun/{str(self.course.id)}'),
             ("run", self.course.id.run),
             ("url", f'/course/{str(self.course.id)}'),
@@ -143,6 +147,7 @@ class HomePageCoursesViewV2Test(CourseTestCase):
             ("cms_link", f'//{settings.CMS_BASE}{reverse_course_url("course_handler", self.archived_course.id)}'),
             ("number", self.archived_course.number),
             ("org", self.archived_course.org),
+            ("organization_display_name", self.archived_course.org),
             ("rerun_link", f'/course_rerun/{str(self.archived_course.id)}'),
             ("run", self.archived_course.id.run),
             ("url", f'/course/{str(self.archived_course.id)}'),
@@ -173,6 +178,7 @@ class HomePageCoursesViewV2Test(CourseTestCase):
             ("cms_link", f'//{settings.CMS_BASE}{reverse_course_url("course_handler", self.archived_course.id)}'),
             ("number", self.archived_course.number),
             ("org", self.archived_course.org),
+            ("organization_display_name", self.archived_course.org),
             ("rerun_link", f'/course_rerun/{str(self.archived_course.id)}'),
             ("run", self.archived_course.id.run),
             ("url", f'/course/{str(self.archived_course.id)}'),
@@ -202,6 +208,31 @@ class HomePageCoursesViewV2Test(CourseTestCase):
 
         self.assertEqual(response.data["count"], 2)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_organization_display_name_uses_override_then_organization_name(self):
+        """Course cards return readable organization text without changing their raw org."""
+        OrganizationFactory.create(
+            short_name=self.course.org,
+            name="Readable Organization",
+        )
+
+        response = self.client.get(self.api_v2_url)
+        course = next(
+            course for course in response.data["results"]["courses"]
+            if course["course_key"] == str(self.course.id)
+        )
+        self.assertEqual(course["org"], self.course.org)
+        self.assertEqual(course["organization_display_name"], "Readable Organization")
+
+        self.active_course.display_org_with_default = "Course-specific organization"
+        self.active_course.save(update_fields=["display_org_with_default"])
+
+        response = self.client.get(self.api_v2_url)
+        course = next(
+            course for course in response.data["results"]["courses"]
+            if course["course_key"] == str(self.course.id)
+        )
+        self.assertEqual(course["organization_display_name"], "Course-specific organization")
 
     @ddt.data(
         ("active_only", "true"),
